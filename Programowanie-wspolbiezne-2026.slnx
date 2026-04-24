@@ -1,6 +1,11 @@
 <Solution>
-  <Project Path="Introduction-01/Data/BusinessLogicTest/BusinessLogicTest.csproj" />
+  <Project Path="Introduction-01/BusinessLogic/BusinessLogic.csproj" />
+  <Project Path="Introduction-01/BusinessLogicTest/BusinessLogicTest.csproj" />
+  <Project Path="Introduction-01/Data/Data.csproj" />
+  <Project Path="Introduction-01/DataTest/DataTest.csproj" />
+  <Project Path="Introduction-01/PresentationModel/PresentationModel.csproj" />
   <Project Path="Introduction-01/PresentationModelTest/PresentationModelTest.csproj" />
+  <Project Path="Introduction-01/PresentationViewModel/PresentationViewModel.csproj" />
   <Project Path="Introduction-01/PresentationViewModelTest/PresentationViewModelTest.csproj" />
-  <Project Path="Introduction-01/PresentationViewTest/PresentationViewTest.csproj" />
+  <Project Path="PresentationView/PresentationView.csproj" Id="b0093ee6-fd2e-44d8-8f5a-6f1c81037721" />
 </Solution>

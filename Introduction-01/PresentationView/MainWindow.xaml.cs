@@ -12,8 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using PresentationViewModel;
 
-namespace PresentationView2
+namespace PresentationView
 {
     /// <summary>
     /// Logika interakcji dla klasy MainWindow.xaml
@@ -23,6 +24,10 @@ namespace PresentationView2
         public MainWindow()
         {
             InitializeComponent();
+
+            // Łączymy Widok z ViewModel-em. 
+            // Dzięki temu Bindingi w XAML wiedzą, gdzie szukać "BallCount" czy "StartCommand".
+            this.DataContext = new MainViewModel();
         }
     }
 }
