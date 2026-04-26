@@ -10,5 +10,14 @@ namespace PresentationView
             InitializeComponent();
             this.DataContext = new MainViewModel(); 
         }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (this.DataContext is MainViewModel vm)
+            {
+                vm.CanvasWidth = BallsControl.ActualWidth;
+                vm.CanvasHeight = BallsControl.ActualHeight;
+            }
+        }
     }
 }

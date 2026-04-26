@@ -10,6 +10,9 @@ namespace Presentation.Model
         private readonly LogicAbstractAPI _logicAPI;
         public ObservableCollection<BallModel> Balls { get; } = new ObservableCollection<BallModel>();
 
+        public double CanvasWidth { get; set; } = 640;
+        public double CanvasHeight { get; set; } = 400;
+
         public PresentationModel(LogicAbstractAPI? logicAPI = null)
         {
             _logicAPI = logicAPI ?? LogicAbstractAPI.CreateAPI();
@@ -22,15 +25,18 @@ namespace Presentation.Model
 
             foreach (var ball in _logicAPI.GetBalls())
             {
-                var newBall = new BallModel(ball.X, ball.Y, ball.Radius);
+                double scaledX = ball.X * (CanvasWidth / 640.0);
+                double scaledY = ball.Y * (CanvasHeight / 400.0);
+
+                var newBall = new BallModel(scaledX, scaledY, ball.Radius);
                 Balls.Add(newBall);
 
                 ball.BallChanged += (s, e) =>
                 {
                     if (e.Ball != null)
                     {
-                        newBall.X = e.Ball.X;
-                        newBall.Y = e.Ball.Y;
+                        newBall.X = e.Ball.X * (CanvasWidth / 640.0);
+                        newBall.Y = e.Ball.Y * (CanvasHeight / 400.0);
                     }
                 };
             }

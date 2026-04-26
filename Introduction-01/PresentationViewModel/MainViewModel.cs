@@ -16,6 +16,17 @@ namespace Presentation.ViewModel
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
 
+        public double CanvasWidth
+        {
+            get => _model.CanvasWidth;
+            set { _model.CanvasWidth = value; OnPropertyChanged(); }
+        }
+        public double CanvasHeight
+        {
+            get => _model.CanvasHeight;
+            set { _model.CanvasHeight = value; OnPropertyChanged(); }
+        }
+
         public int BallCount
         {
             get => _ballCount;
@@ -25,6 +36,8 @@ namespace Presentation.ViewModel
         public MainViewModel()
         {
             _model = new PresentationModel();
+            _model.CanvasWidth = 640;
+            _model.CanvasHeight = 400;
             StartCommand = new RelayCommand(() => _model.Start(BallCount));
             StopCommand = new RelayCommand(() => _model.Stop());
         }
