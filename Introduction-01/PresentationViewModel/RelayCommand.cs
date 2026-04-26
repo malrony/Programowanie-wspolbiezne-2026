@@ -9,6 +9,6 @@ namespace Presentation.ViewModel
         public RelayCommand(Action execute) => _execute = execute;
         public bool CanExecute(object? parameter) => true;
         public void Execute(object? parameter) => _execute();
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
     }
 }
