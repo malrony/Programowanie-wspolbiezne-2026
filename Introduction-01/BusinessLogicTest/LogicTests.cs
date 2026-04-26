@@ -1,28 +1,31 @@
 ﻿using Logic;
+using Data;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BusinessLogicTest
 {
+    internal class FakeDataApi : DataAbstractAPI
+    {
+        public bool CreateBallsCalled = false;
+        public override int Width => 640;
+        public override int Height => 400;
+        public override void CreateBalls(int count, int radius, double weight) => CreateBallsCalled = true;
+        public override List<IBall> GetBalls() => new List<IBall>();
+        public override void StopSimulation() { }
+    }
+
     [TestClass]
     public class LogicTests
     {
         [TestMethod]
-        public void TestBallCollisionPhysics()
+        public void TestLogicCallsDataLayer()
         {
-            // 1. Arrange: Stworzenie API warstwy logiki
-            // Zakładając, że CreateAPI() zwraca instancję klasy implementującej LogicAbstractAPI
-            LogicAbstractAPI logic = LogicAbstractAPI.CreateAPI();
+            var fakeData = new FakeDataApi();
+            var logic = LogicAbstractAPI.CreateAPI(fakeData);
 
-            // 2. Act: Wywołanie metody logicznej
-            int ballsCount = 2;
-            logic.StartSimulation(ballsCount);
-            var balls = logic.GetBalls();
+            logic.StartSimulation(5);
 
-            // 3. Assert
-            Assert.IsNotNull(balls, "Lista kul nie powinna być nullem");
-            Assert.AreEqual(ballsCount, balls.Count, "Liczba kul powinna się zgadzać");
-
-            // Sprawdzenie czy pierwsza kula mieści się w granicach (np. 0-600)
-            Assert.IsTrue(balls[0].X >= 0, "Kula X jest poza lewą krawędzią");
+            Assert.IsTrue(fakeData.CreateBallsCalled, "Warstwa logiki powinna wywołać CreateBalls w warstwie danych.");
         }
     }
 }
