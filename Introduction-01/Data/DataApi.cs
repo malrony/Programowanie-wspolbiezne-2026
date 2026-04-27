@@ -115,15 +115,6 @@ namespace Data
                 if (_x <= 0 || _x + Radius >= width) VX *= -1;
                 if (_y <= 0 || _y + Radius >= height) VY *= -1;
 
-                //if (rand.NextDouble() < 0.05)
-                //{
-                //    vx += (rand.NextDouble() * 0.2 - 0.1);
-                //    vy += (rand.NextDouble() * 0.2 - 0.1);
-
-                //    vx = Math.Clamp(vx, -2, 2);
-                //    vy = Math.Clamp(vy, -2, 2);
-                //}
-
                 BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
                 await Task.Delay(16, token);
             }

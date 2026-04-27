@@ -25,8 +25,8 @@ namespace Presentation.Model
 
             foreach (var ball in _logicAPI.GetBalls())
             {
-                double scaledX = ball.X * (CanvasWidth / 640.0);
-                double scaledY = ball.Y * (CanvasHeight / 400.0);
+                double scaledX = ball.X * (CanvasWidth - ball.Radius) / (640.0 - ball.Radius);
+                double scaledY = ball.Y * (CanvasHeight - ball.Radius) / (400.0 - ball.Radius);
 
                 var newBall = new BallModel(scaledX, scaledY, ball.Radius);
                 Balls.Add(newBall);
@@ -35,8 +35,8 @@ namespace Presentation.Model
                 {
                     if (e.Ball != null)
                     {
-                        newBall.X = e.Ball.X * (CanvasWidth / 640.0);
-                        newBall.Y = e.Ball.Y * (CanvasHeight / 400.0);
+                        newBall.X = e.Ball.X * (CanvasWidth - e.Ball.Radius) / (640.0 - e.Ball.Radius);
+                        newBall.Y = e.Ball.Y * (CanvasHeight - e.Ball.Radius) / (400.0 - e.Ball.Radius);
                     }
                 };
             }

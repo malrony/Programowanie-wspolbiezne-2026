@@ -10,7 +10,7 @@ namespace Logic
         public abstract void StopSimulation();
         public abstract List<IBall> GetBalls();
 
-        public static LogicAbstractAPI CreateAPI(DataAbstractAPI data = null)
+        public static LogicAbstractAPI CreateAPI(DataAbstractAPI? data = null)
         {
             return new LogicApi(data ?? DataAbstractAPI.CreateAPI(640, 400));
         }

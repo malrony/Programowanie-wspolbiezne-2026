@@ -16,7 +16,6 @@ namespace PresentationModelTest
             double logicalX = 320;
             double logicalY = 200;
 
-            //Obliczamy pozycję na ekranie wg wzoru
             double expectedScaledX = logicalX * (model.CanvasWidth / 640.0);
             double expectedScaledY = logicalY * (model.CanvasHeight / 400.0);
 
