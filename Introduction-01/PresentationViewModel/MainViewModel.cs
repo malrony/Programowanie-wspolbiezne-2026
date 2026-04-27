@@ -33,9 +33,9 @@ namespace Presentation.ViewModel
             set { _ballCount = value; OnPropertyChanged(); }
         }
 
-        public MainViewModel()
+        public MainViewModel(PresentationModel? model = null)
         {
-            _model = new PresentationModel();
+            _model = model ?? new PresentationModel();
             _model.CanvasWidth = 640;
             _model.CanvasHeight = 400;
             StartCommand = new RelayCommand(() => _model.Start(BallCount));

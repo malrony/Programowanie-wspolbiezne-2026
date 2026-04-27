@@ -18,7 +18,7 @@ namespace PresentationViewModelTest
             vm.BallCount = 10;
 
             Assert.AreEqual(10, vm.BallCount);
-            Assert.IsTrue(eventRaised, "Zdarzenie PropertyChanged nie zostało wywołane dla BallCount");
+            Assert.IsTrue(eventRaised, "ViewModel nie powiadomił Widoku o zmianie liczby kulek.");
         }
 
         [TestMethod]
@@ -30,7 +30,7 @@ namespace PresentationViewModelTest
             vm.StartCommand.Execute(null);
 
             Assert.IsNotNull(vm.Balls);
-            Assert.IsTrue(vm.Balls.Count > 0 || vm.Balls != null);
+            Assert.HasCount(5, vm.Balls);
         }
     }
 }
