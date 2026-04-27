@@ -99,27 +99,30 @@ namespace Data
             _y = y;
             Radius = radius;
             Weight = weight;
+
+            Random rand = new Random();
+            VX = rand.NextDouble() * 2 - 1;
+            VY = rand.NextDouble() * 2 - 1;
         }
 
         public async Task Move(CancellationToken token, int width, int height)
         {
-            Random rand = new Random();
-            double vx = rand.NextDouble() * 2 - 1;
-            double vy = rand.NextDouble() * 2 - 1;
-
             while (!token.IsCancellationRequested)
             {
-                _x += vx;
-                _y += vy;
+                _x += VX;
+                _y += VY;
 
-                if (_x <= 0 || _x + Radius >= width) vx *= -1;
-                if (_y <= 0 || _y + Radius >= height) vy *= -1;
+                if (_x <= 0 || _x + Radius >= width) VX *= -1;
+                if (_y <= 0 || _y + Radius >= height) VY *= -1;
 
-                if (rand.NextDouble() < 0.01)
-                {
-                    vx = rand.NextDouble() * 2 - 1;
-                    vy = rand.NextDouble() * 2 - 1;
-                }
+                //if (rand.NextDouble() < 0.05)
+                //{
+                //    vx += (rand.NextDouble() * 0.2 - 0.1);
+                //    vy += (rand.NextDouble() * 0.2 - 0.1);
+
+                //    vx = Math.Clamp(vx, -2, 2);
+                //    vy = Math.Clamp(vy, -2, 2);
+                //}
 
                 BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
                 await Task.Delay(16, token);
