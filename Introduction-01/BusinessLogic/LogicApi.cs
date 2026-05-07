@@ -4,22 +4,26 @@ using System.Collections.Generic;
 
 namespace Logic
 {
+    // 1. Definicja klasy abstrakcyjnej (API)
     public abstract class LogicAbstractAPI
     {
         public abstract void StartSimulation(int ballsCount);
         public abstract void StopSimulation();
         public abstract List<IBall> GetBalls();
 
+        // Metoda wytwórcza (Factory Method)
         public static LogicAbstractAPI CreateAPI(DataAbstractAPI? data = null)
         {
+            // Jeśli dane nie zostaną przekazane (np. w testach), tworzymy domyślną warstwę danych
             return new LogicApi(data ?? DataAbstractAPI.CreateAPI(640, 400));
         }
     }
 
+    // 2. Implementacja klasy (Internal, aby ukryć ją przed modelem)
     internal class LogicApi : LogicAbstractAPI
     {
         private readonly DataAbstractAPI _data;
-        private readonly object _lock = new object();
+        private readonly object _collisionLock = new object();
 
         public LogicApi(DataAbstractAPI data)
         {
@@ -28,7 +32,9 @@ namespace Logic
 
         public override void StartSimulation(int ballsCount)
         {
+            // Tworzymy kule (promień 20, masa 1.0)
             _data.CreateBalls(ballsCount, 20, 1.0);
+            var balls = _data.GetBalls();
 
             foreach (var ball in _data.GetBalls())
             {
@@ -41,14 +47,60 @@ namespace Logic
             _data.StopSimulation();
         }
 
-        private void OnBallChanged(object sender, BallChangedEventArgs e)
+        private void OnBallChanged(object? sender, BallChangedEventArgs e)
         {
-            if (e.Ball == null) return;
+            IBall ball = e.Ball;
+            if (ball == null) return;
 
-            lock (_lock)
+            // Sekcja krytyczna dla współbieżnych zderzeń
+            lock (_collisionLock)
             {
-                CheckWallCollision(e.Ball);
+                CheckWallCollision(ball);
+                CheckBallCollisions(ball);
             }
+        }
+
+        private void CheckBallCollisions(IBall ball)
+        {
+            foreach (var otherBall in _data.GetBalls())
+            {
+                if (ball == otherBall) continue;
+
+                double dx = ball.X - otherBall.X;
+                double dy = ball.Y - otherBall.Y;
+                double distance = Math.Sqrt(dx * dx + dy * dy);
+                double minDistance = (ball.Radius / 2.0) + (otherBall.Radius / 2.0);
+
+                if (distance <= minDistance)
+                {
+                    HandleCollision(ball, otherBall);
+                }
+            }
+        }
+
+        private void HandleCollision(IBall ball1, IBall ball2)
+        {
+            // Fizyka zderzeń sprężystych (Elastic Collision)
+            double vRelativeX = ball1.VX - ball2.VX;
+            double vRelativeY = ball1.VY - ball2.VY;
+            double xRelative = ball1.X - ball2.X;
+            double yRelative = ball1.Y - ball2.Y;
+
+            // Zapobieganie wielokrotnemu odbiciu (sprawdzenie czy lecą ku sobie)
+            if (vRelativeX * xRelative + vRelativeY * yRelative >= 0) return;
+
+            double m1 = ball1.Weight;
+            double m2 = ball2.Weight;
+
+            double newVX1 = (ball1.VX * (m1 - m2) + 2 * m2 * ball2.VX) / (m1 + m2);
+            double newVY1 = (ball1.VY * (m1 - m2) + 2 * m2 * ball2.VY) / (m1 + m2);
+            double newVX2 = (ball2.VX * (m2 - m1) + 2 * m1 * ball1.VX) / (m1 + m2);
+            double newVY2 = (ball2.VY * (m2 - m1) + 2 * m1 * ball1.VY) / (m1 + m2);
+
+            ball1.VX = newVX1;
+            ball1.VY = newVY1;
+            ball2.VX = newVX2;
+            ball2.VY = newVY2;
         }
 
         private void CheckWallCollision(IBall ball)

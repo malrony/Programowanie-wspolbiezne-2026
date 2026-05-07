@@ -50,13 +50,14 @@ namespace Data
 
         public override void CreateBalls(int count, int radius, double weight)
         {
-            StopSimulation();
+            StopSimulation(); // Upewniamy się, że poprzednia symulacja jest zatrzymana
             _balls.Clear();
             _cts = new CancellationTokenSource();
             Random rand = new Random();
 
             for (int i = 0; i < count; i++)
             {
+                // Tworzymy kulę wewnątrz granic stołu
                 var ball = new Ball(
                     rand.Next(0, Width - radius),
                     rand.Next(0, Height - radius),
@@ -65,17 +66,23 @@ namespace Data
                 );
 
                 _balls.Add(ball);
-                Task.Run(() => ball.Move(_cts.Token, Width, Height));
+
+                // Zmiana: Move nie przyjmuje już Width i Height, bo za ściany odpowiada Logika
+                // Task.Run zapewnia, że każda kula porusza się współbieżnie
+                Task.Run(() => ball.Move(_cts.Token));
             }
         }
 
-        public override List<IBall> GetBalls() => _balls;
+        public override List<IBall> GetBalls() => new List<IBall>(_balls); // Zwracamy kopię listy dla bezpieczeństwa wątkowego
 
         public override void StopSimulation()
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = null;
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _cts.Dispose();
+                _cts = null;
+            }
         }
     }
 
@@ -83,13 +90,25 @@ namespace Data
     {
         private double _x;
         private double _y;
+        private double _vx;
+        private double _vy;
+        private readonly object _lock = new object(); // Sekcja krytyczna kuli
 
-        public double X => _x;
-        public double Y => _y;
+        public double X { get { lock (_lock) return _x; } }
+        public double Y { get { lock (_lock) return _y; } }
         public int Radius { get; }
         public double Weight { get; }
-        public double VX { get; set; }
-        public double VY { get; set; }
+
+        public double VX
+        {
+            get { lock (_lock) return _vx; }
+            set { lock (_lock) _vx = value; }
+        }
+        public double VY
+        {
+            get { lock (_lock) return _vy; }
+            set { lock (_lock) _vy = value; }
+        }
 
         public event EventHandler<BallChangedEventArgs>? BallChanged;
 
@@ -101,22 +120,34 @@ namespace Data
             Weight = weight;
 
             Random rand = new Random();
-            VX = rand.NextDouble() * 2 - 1;
-            VY = rand.NextDouble() * 2 - 1;
+            // Losujemy prędkość z zakresu (-2, 2) dla lepszej dynamiki
+            _vx = rand.NextDouble() * 4 - 2;
+            _vy = rand.NextDouble() * 4 - 2;
         }
 
-        public async Task Move(CancellationToken token, int width, int height)
+        public async Task Move(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                _x += VX;
-                _y += VY;
+                // Sekcja krytyczna: aktualizacja pozycji
+                lock (_lock)
+                {
+                    _x += _vx;
+                    _y += _vy;
+                }
 
-                if (_x <= 0 || _x + Radius >= width) VX *= -1;
-                if (_y <= 0 || _y + Radius >= height) VY *= -1;
-
+                // Powiadomienie logiki i modelu o zmianie
                 BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
-                await Task.Delay(16, token);
+
+                try
+                {
+                    // Delay zapewnia płynność 60 FPS i pozwala procesorowi "odetchnąć"
+                    await Task.Delay(16, token);
+                }
+                catch (TaskCanceledException)
+                {
+                    break; // Wyjście z pętli po anulowaniu tokena
+                }
             }
         }
     }
