@@ -4,14 +4,12 @@ using System.Collections.Generic;
 
 namespace Logic
 {
-    // 1. Definicja klasy abstrakcyjnej (API)
     public abstract class LogicAbstractAPI
     {
         public abstract void StartSimulation(int ballsCount);
         public abstract void StopSimulation();
         public abstract List<IBall> GetBalls();
 
-        // Metoda wytwórcza (Factory Method)
         public static LogicAbstractAPI CreateAPI(DataAbstractAPI? data = null)
         {
             // Jeśli dane nie zostaną przekazane (np. w testach), tworzymy domyślną warstwę danych
@@ -19,7 +17,6 @@ namespace Logic
         }
     }
 
-    // 2. Implementacja klasy (Internal, aby ukryć ją przed modelem)
     internal class LogicApi : LogicAbstractAPI
     {
         private readonly DataAbstractAPI _data;
@@ -32,7 +29,6 @@ namespace Logic
 
         public override void StartSimulation(int ballsCount)
         {
-            // Tworzymy kule (promień 20, masa 1.0)
             _data.CreateBalls(ballsCount, 20, 1.0);
             var balls = _data.GetBalls();
 
@@ -80,7 +76,7 @@ namespace Logic
 
         private void HandleCollision(IBall ball1, IBall ball2)
         {
-            // Fizyka zderzeń sprężystych (Elastic Collision)
+            // Fizyka zderzeń sprężystych 
             double vRelativeX = ball1.VX - ball2.VX;
             double vRelativeY = ball1.VY - ball2.VY;
             double xRelative = ball1.X - ball2.X;

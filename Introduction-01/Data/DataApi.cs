@@ -50,14 +50,13 @@ namespace Data
 
         public override void CreateBalls(int count, int radius, double weight)
         {
-            StopSimulation(); // Upewniamy się, że poprzednia symulacja jest zatrzymana
+            StopSimulation();
             _balls.Clear();
             _cts = new CancellationTokenSource();
             Random rand = new Random();
 
             for (int i = 0; i < count; i++)
             {
-                // Tworzymy kulę wewnątrz granic stołu
                 var ball = new Ball(
                     rand.Next(0, Width - radius),
                     rand.Next(0, Height - radius),
@@ -67,13 +66,13 @@ namespace Data
 
                 _balls.Add(ball);
 
-                // Zmiana: Move nie przyjmuje już Width i Height, bo za ściany odpowiada Logika
+                // Move nie przyjmuje już Width i Height, bo za ściany odpowiada Logika
                 // Task.Run zapewnia, że każda kula porusza się współbieżnie
                 Task.Run(() => ball.Move(_cts.Token));
             }
         }
 
-        public override List<IBall> GetBalls() => new List<IBall>(_balls); // Zwracamy kopię listy dla bezpieczeństwa wątkowego
+        public override List<IBall> GetBalls() => new List<IBall>(_balls);
 
         public override void StopSimulation()
         {
@@ -120,7 +119,6 @@ namespace Data
             Weight = weight;
 
             Random rand = new Random();
-            // Losujemy prędkość z zakresu (-2, 2) dla lepszej dynamiki
             _vx = rand.NextDouble() * 4 - 2;
             _vy = rand.NextDouble() * 4 - 2;
         }
@@ -141,12 +139,11 @@ namespace Data
 
                 try
                 {
-                    // Delay zapewnia płynność 60 FPS i pozwala procesorowi "odetchnąć"
                     await Task.Delay(16, token);
                 }
                 catch (TaskCanceledException)
                 {
-                    break; // Wyjście z pętli po anulowaniu tokena
+                    break;
                 }
             }
         }
