@@ -11,7 +11,7 @@ namespace PresentationModelTest
         {
             public double X { get; set; }
             public double Y { get; set; }
-            public int Radius => 20;
+            public int Diameter => 20;
             public double VX { get; set; }
             public double VY { get; set; }
             public double Weight => 1.0;

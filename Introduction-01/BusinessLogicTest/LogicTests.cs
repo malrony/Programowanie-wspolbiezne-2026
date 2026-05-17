@@ -19,7 +19,7 @@ namespace BusinessLogicTest
     {
         public double X { get; set; }
         public double Y { get; set; }
-        public int Radius { get; set; } = 20;
+        public int Diameter { get; set; } = 20;
         public double VX { get; set; }
         public double VY { get; set; }
         public double Weight { get; set; } = 1.0;

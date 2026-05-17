@@ -23,7 +23,7 @@ namespace Data
     {
         double X { get; }
         double Y { get; }
-        int Radius { get; }
+        int Diameter { get; }
         double VX { get; set; }
         double VY { get; set; }
         double Weight { get; }
@@ -66,7 +66,6 @@ namespace Data
 
                 _balls.Add(ball);
 
-                // Move nie przyjmuje już Width i Height, bo za ściany odpowiada Logika
                 // Task.Run zapewnia, że każda kula porusza się współbieżnie
                 Task.Run(() => ball.Move(_cts.Token));
             }
@@ -95,7 +94,7 @@ namespace Data
 
         public double X { get { lock (_lock) return _x; } }
         public double Y { get { lock (_lock) return _y; } }
-        public int Radius { get; }
+        public int Diameter { get; }
         public double Weight { get; }
 
         public double VX
@@ -115,7 +114,7 @@ namespace Data
         {
             _x = x;
             _y = y;
-            Radius = radius;
+            Diameter = radius;
             Weight = weight;
 
             Random rand = new Random();

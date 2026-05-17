@@ -65,7 +65,7 @@ namespace Logic
                 double dx = ball.X - otherBall.X;
                 double dy = ball.Y - otherBall.Y;
                 double distance = Math.Sqrt(dx * dx + dy * dy);
-                double minDistance = (ball.Radius / 2.0) + (otherBall.Radius / 2.0);
+                double minDistance = (ball.Diameter / 2.0) + (otherBall.Diameter / 2.0);
 
                 if (distance <= minDistance)
                 {
@@ -82,30 +82,30 @@ namespace Logic
             double xRelative = ball1.X - ball2.X;
             double yRelative = ball1.Y - ball2.Y;
 
-            // Zapobieganie wielokrotnemu odbiciu (sprawdzenie czy lecą ku sobie)
-            if (vRelativeX * xRelative + vRelativeY * yRelative >= 0) return;
+            double apporachIndicator = vRelativeX * xRelative + vRelativeY * yRelative;
+            if (apporachIndicator >= 0) return; // Kule się oddalają
+
+            double distSquared = xRelative * xRelative + yRelative * yRelative;
+            if (distSquared == 0) return;
 
             double m1 = ball1.Weight;
             double m2 = ball2.Weight;
 
-            double newVX1 = (ball1.VX * (m1 - m2) + 2 * m2 * ball2.VX) / (m1 + m2);
-            double newVY1 = (ball1.VY * (m1 - m2) + 2 * m2 * ball2.VY) / (m1 + m2);
-            double newVX2 = (ball2.VX * (m2 - m1) + 2 * m1 * ball1.VX) / (m1 + m2);
-            double newVY2 = (ball2.VY * (m2 - m1) + 2 * m1 * ball1.VY) / (m1 + m2);
+            double impulseFactor = apporachIndicator / (distSquared * (m1 + m2));
 
-            ball1.VX = newVX1;
-            ball1.VY = newVY1;
-            ball2.VX = newVX2;
-            ball2.VY = newVY2;
+            ball1.VX -= 2 * m2 * impulseFactor * xRelative;
+            ball1.VY -= 2 * m2 * impulseFactor * yRelative;
+            ball2.VX += 2 * m1 * impulseFactor * xRelative;
+            ball2.VY += 2 * m1 * impulseFactor * yRelative;
         }
 
         private void CheckWallCollision(IBall ball)
         {
             if (ball.X <= 0 && ball.VX < 0) ball.VX *= -1;
-            if (ball.X + ball.Radius >= _data.Width && ball.VX > 0) ball.VX *= -1;
+            if (ball.X + ball.Diameter >= _data.Width && ball.VX > 0) ball.VX *= -1;
 
             if (ball.Y <= 0 && ball.VY < 0) ball.VY *= -1;
-            if (ball.Y + ball.Radius >= _data.Height && ball.VY > 0) ball.VY *= -1;
+            if (ball.Y + ball.Diameter >= _data.Height && ball.VY > 0) ball.VY *= -1;
         }
 
         public override List<IBall> GetBalls() => _data.GetBalls();
