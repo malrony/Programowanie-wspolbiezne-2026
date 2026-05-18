@@ -46,7 +46,7 @@ namespace BusinessLogicTest
             // Rejestrujemy kule w logice (podpięcie zdarzeń)
             logic.StartSimulation(0); // 0, bo kule dodaliśmy ręcznie do fake
 
-            // Act: Symulujemy ruch ball1, co powinno wywołać sprawdzenie kolizji w logice
+            // Symulujemy ruch ball1, co powinno wywołać sprawdzenie kolizji w logice
             ball1.TriggerChange();
 
             // Kule powinny odbić się od siebie (zmienić zwrot VX)
