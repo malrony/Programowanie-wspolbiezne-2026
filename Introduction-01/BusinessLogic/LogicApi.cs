@@ -12,7 +12,6 @@ namespace Logic
 
         public static LogicAbstractAPI CreateAPI(DataAbstractAPI? data = null)
         {
-            // Jeśli dane nie zostaną przekazane (np. w testach), tworzymy domyślną warstwę danych
             return new LogicApi(data ?? DataAbstractAPI.CreateAPI(640, 400));
         }
     }
@@ -47,13 +46,9 @@ namespace Logic
         {
             IBall ball = e.Ball;
             if (ball == null) return;
-
-            // Sekcja krytyczna dla współbieżnych zderzeń
-            lock (_collisionLock)
-            {
-                CheckWallCollision(ball);
-                CheckBallCollisions(ball);
-            }
+   
+            CheckWallCollision(ball);
+            CheckBallCollisions(ball);
         }
 
         private void CheckBallCollisions(IBall ball)
@@ -69,7 +64,10 @@ namespace Logic
 
                 if (distance <= minDistance)
                 {
-                    HandleCollision(ball, otherBall);
+                    lock (_collisionLock)
+                    {
+                        HandleCollision(ball, otherBall);
+                    }
                 }
             }
         }

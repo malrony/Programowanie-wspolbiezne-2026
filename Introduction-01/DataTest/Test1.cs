@@ -25,7 +25,7 @@ namespace DataTest
                 Assert.IsTrue(ball.X >= 0 && ball.X <= width - radius, "Kula X poza zakresem.");
                 Assert.IsTrue(ball.Y >= 0 && ball.Y <= height - radius, "Kula Y poza zakresem.");
 
-                // Sprawdzenie czy cechy kul (masa, promień) są poprawnie przypisane
+                // Sprawdzenie czy masa, promień są poprawnie przypisane
                 Assert.AreEqual(radius, ball.Diameter, "Promień kuli jest nieprawidłowy.");
                 Assert.AreEqual(weight, ball.Weight, "Masa kuli jest nieprawidłowa.");
             }

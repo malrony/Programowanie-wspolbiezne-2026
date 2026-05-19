@@ -43,7 +43,6 @@ namespace BusinessLogicTest
 
             var logic = LogicAbstractAPI.CreateAPI(fakeData);
 
-            // Rejestrujemy kule w logice (podpięcie zdarzeń)
             logic.StartSimulation(0); // 0, bo kule dodaliśmy ręcznie do fake
 
             // Symulujemy ruch ball1, co powinno wywołać sprawdzenie kolizji w logice
