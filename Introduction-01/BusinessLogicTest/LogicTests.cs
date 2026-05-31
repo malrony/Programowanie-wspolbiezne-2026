@@ -23,6 +23,9 @@ namespace BusinessLogicTest
         public double VX { get; set; }
         public double VY { get; set; }
         public double Weight { get; set; } = 1.0;
+
+        public int Id => throw new NotImplementedException();
+
         public event EventHandler<BallChangedEventArgs>? BallChanged;
 
         public void TriggerChange() => BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });

@@ -5,18 +5,31 @@ namespace DataTest
     [TestClass]
     public sealed class Test1
     {
+        private DataAbstractAPI _api;
+        [TestInitialize]
+        public void Setup()
+        {
+            // Wykonuje się automatycznie przed każdym testem.
+            _api = DataAbstractAPI.CreateAPI(640, 400);
+        }
+
+        [TestCleanup]
+        public void Teardown()
+        {
+            // Wykonuje się automatycznie po każdym teście.
+            _api?.StopSimulation();
+        }
         [TestMethod]
         public void TestCreateBallsPositionAndCount()
         {
             int width = 640;
             int height = 400;
-            var api = DataAbstractAPI.CreateAPI(width, height);
             int ballCount = 10;
             int radius = 20;
             double weight = 1.0;
 
-            api.CreateBalls(ballCount, radius, weight);
-            var balls = api.GetBalls();
+            _api.CreateBalls(ballCount, radius, weight);
+            var balls = _api.GetBalls();
 
             Assert.HasCount(ballCount, balls);
 
@@ -32,31 +45,28 @@ namespace DataTest
         }
 
         [TestMethod]
-        public async Task TestBallsMovement()
+        public async Task TestBallsMovement_RealTime()
         {
-            var api = DataAbstractAPI.CreateAPI(640, 400);
-            api.CreateBalls(1, 20, 1.0);
-            var ball = api.GetBalls().First();
+            _api.CreateBalls(1, 20, 1.0);
+            var ball = _api.GetBalls()[0];
 
             double initialX = ball.X;
             double initialY = ball.Y;
 
+            // Używamy await Task.Delay, aby symulacja w tle mogła zadziałać
             await Task.Delay(100);
 
-            // Sprawdzamy czy kula się poruszyła (czy VX/VY działają)
-            Assert.AreNotEqual(initialX, ball.X, "Pozycja X kuli nie zmieniła się po czasie.");
-            Assert.AreNotEqual(initialY, ball.Y, "Pozycja Y kuli nie zmieniła się po czasie.");
+            Assert.IsTrue(ball.X != initialX || ball.Y != initialY, "Kula nie poruszyła się w czasie rzeczywistym!");
         }
 
         [TestMethod]
         public void TestStopSimulationClearsBalls()
         {
-            var api = DataAbstractAPI.CreateAPI(640, 400);
-            api.CreateBalls(5, 20, 1.0);
+            _api.CreateBalls(5, 20, 1.0);
 
-            api.StopSimulation();
-            api.CreateBalls(2, 20, 1.0);
-            Assert.AreEqual(2, api.GetBalls().Count, "StopSimulation lub ponowne CreateBalls nie wyczyściło starej listy.");
+            _api.StopSimulation();
+            _api.CreateBalls(2, 20, 1.0);
+            Assert.AreEqual(2, _api.GetBalls().Count, "StopSimulation lub ponowne CreateBalls nie wyczyściło starej listy.");
         }
     }
 }

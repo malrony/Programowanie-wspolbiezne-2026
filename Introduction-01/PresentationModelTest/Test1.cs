@@ -15,6 +15,9 @@ namespace PresentationModelTest
             public double VX { get; set; }
             public double VY { get; set; }
             public double Weight => 1.0;
+
+            public int Id => throw new NotImplementedException();
+
             public event EventHandler<BallChangedEventArgs>? BallChanged;
 
             public void TriggerMove(double newX, double newY)
