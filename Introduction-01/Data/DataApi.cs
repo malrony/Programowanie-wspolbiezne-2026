@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,6 +26,7 @@ namespace Data
 
     public interface IBall
     {
+        int Id { get; }
         double X { get; }
         double Y { get; }
         int Diameter { get; }
@@ -35,10 +41,71 @@ namespace Data
         public IBall? Ball { get; set; }
     }
 
+    internal class DiagnosticLogger : IDisposable
+    {
+        private readonly BlockingCollection<string> _queue = new BlockingCollection<string>(5000);
+        private readonly string _filePath;
+        private readonly Task _loggingTask;
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
+        public DiagnosticLogger(string filePath)
+        {
+            _filePath = filePath;
+            _loggingTask = Task.Run(() => ProcessLogQueue(_cts.Token));
+        }
+
+        public void LogBallState(int id, double x, double y, double vx, double vy)
+        {
+            var logData = new
+            {
+                Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                BallId = id,
+                X = Math.Round(x, 2),
+                Y = Math.Round(y, 2),
+                VX = Math.Round(vx, 2),
+                VY = Math.Round(vy, 2)
+            };
+
+            string jsonString = JsonSerializer.Serialize(logData);
+            _queue.TryAdd(jsonString);
+        }
+
+        private void ProcessLogQueue(CancellationToken token)
+        {
+            using (var writer = new StreamWriter(_filePath, append: true, encoding: Encoding.ASCII))
+            {
+                while (!_queue.IsCompleted)
+                {
+                    try
+                    {
+                        if (_queue.TryTake(out string? logLine, 100, token))
+                        {
+                            writer.WriteLine(logLine);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            _queue.CompleteAdding();
+            _cts.Cancel();
+            try { _loggingTask.Wait(500); } catch { }
+            _queue.Dispose();
+            _cts.Dispose();
+        }
+    }
+
     internal class DataApi : DataAbstractAPI
     {
         private readonly List<IBall> _balls = new List<IBall>();
         private CancellationTokenSource? _cts;
+        private DiagnosticLogger? _logger;
         public override int Width { get; }
         public override int Height { get; }
 
@@ -53,11 +120,14 @@ namespace Data
             StopSimulation();
             _balls.Clear();
             _cts = new CancellationTokenSource();
+            _logger = new DiagnosticLogger("diagnostics.json");
+
             Random rand = new Random();
 
             for (int i = 0; i < count; i++)
             {
                 var ball = new Ball(
+                    i + 1,
                     rand.Next(0, Width - radius),
                     rand.Next(0, Height - radius),
                     radius,
@@ -65,9 +135,8 @@ namespace Data
                 );
 
                 _balls.Add(ball);
-
-                // Task.Run zapewnia, że każda kula porusza się współbieżnie
-                Task.Run(() => ball.Move(_cts.Token));
+                // Uruchamiamy ruch kuli sterowany przez wewnętrzny Timer
+                ball.StartMoving(_cts.Token, _logger);
             }
         }
 
@@ -81,6 +150,11 @@ namespace Data
                 _cts.Dispose();
                 _cts = null;
             }
+            if (_logger != null)
+            {
+                _logger.Dispose();
+                _logger = null;
+            }
         }
     }
 
@@ -90,8 +164,13 @@ namespace Data
         private double _y;
         private double _vx;
         private double _vy;
-        private readonly object _lock = new object(); // Sekcja krytyczna kuli
+        private readonly object _lock = new object();
 
+        private Timer? _timer;
+        private Stopwatch? _stopwatch;
+        private DiagnosticLogger? _logger;
+
+        public int Id { get; }
         public double X { get { lock (_lock) return _x; } }
         public double Y { get { lock (_lock) return _y; } }
         public int Diameter { get; }
@@ -110,41 +189,56 @@ namespace Data
 
         public event EventHandler<BallChangedEventArgs>? BallChanged;
 
-        public Ball(double x, double y, int radius, double weight)
+        public Ball(int id, double x, double y, int radius, double weight)
         {
+            Id = id;
             _x = x;
             _y = y;
             Diameter = radius;
             Weight = weight;
 
             Random rand = new Random();
-            _vx = rand.NextDouble() * 4 - 2;
-            _vy = rand.NextDouble() * 4 - 2;
+            _vx = rand.NextDouble() * 100 - 50;
+            _vy = rand.NextDouble() * 100 - 50;
         }
 
-        public async Task Move(CancellationToken token)
+        public void StartMoving(CancellationToken token, DiagnosticLogger logger)
         {
-            while (!token.IsCancellationRequested)
+            _logger = logger;
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+
+            // Rejestrujemy token anulowania, aby zatrzymać timer przy stopie symulacji
+            token.Register(() => {
+                _timer?.Dispose();
+                _stopwatch?.Stop();
+            });
+
+            // Tworzymy wątkowy Timer systemowy (System.Threading.Timer)
+            // Wywołuje metodę UpdatePosition co 16 ms (ok. 60 razy na sekundę)
+            _timer = new Timer(UpdatePosition, null, 0, 16);
+        }
+
+        private void UpdatePosition(object? state)
+        {
+            if (_stopwatch == null || _logger == null) return;
+
+            // Obliczanie rzeczywistego upływu czasu (Real-Time)
+            double deltaTime = _stopwatch.Elapsed.TotalSeconds;
+            _stopwatch.Restart();
+
+            lock (_lock)
             {
-                // Sekcja krytyczna: aktualizacja pozycji
-                lock (_lock)
-                {
-                    _x += _vx;
-                    _y += _vy;
-                }
-
-                // Powiadomienie logiki i modelu o zmianie
-                BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
-
-                try
-                {
-                    await Task.Delay(16, token);
-                }
-                catch (TaskCanceledException)
-                {
-                    break;
-                }
+                // Przemieszczenie na bazie czasu rzeczywistego (dx = v * dt)
+                _x += _vx * deltaTime;
+                _y += _vy * deltaTime;
             }
+
+            // Logowanie stanu diagnostycznego kuli
+            _logger.LogBallState(Id, X, Y, VX, VY);
+
+            // Powiadomienie wyższych warstw o zmianie pozycji (Reaktywność)
+            BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
         }
     }
 }
