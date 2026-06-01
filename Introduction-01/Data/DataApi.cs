@@ -120,6 +120,8 @@ namespace Data
             StopSimulation();
             _balls.Clear();
             _cts = new CancellationTokenSource();
+
+            File.WriteAllText("diagnostics.json", string.Empty);
             _logger = new DiagnosticLogger("diagnostics.json");
 
             Random rand = new Random();
@@ -135,7 +137,7 @@ namespace Data
                 );
 
                 _balls.Add(ball);
-                // Uruchamiamy ruch kuli sterowany przez wewnętrzny Timer
+                // Uruchamiamy ruch kuli sterowany przez Timer
                 ball.StartMoving(_cts.Token, _logger);
             }
         }
@@ -208,14 +210,12 @@ namespace Data
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
 
-            // Rejestrujemy token anulowania, aby zatrzymać timer przy stopie symulacji
             token.Register(() => {
                 _timer?.Dispose();
                 _stopwatch?.Stop();
             });
 
             // Tworzymy wątkowy Timer systemowy (System.Threading.Timer)
-            // Wywołuje metodę UpdatePosition co 16 ms (ok. 60 razy na sekundę)
             _timer = new Timer(UpdatePosition, null, 0, 16);
         }
 
@@ -234,7 +234,6 @@ namespace Data
                 _y += _vy * deltaTime;
             }
 
-            // Logowanie stanu diagnostycznego kuli
             _logger.LogBallState(Id, X, Y, VX, VY);
 
             // Powiadomienie wyższych warstw o zmianie pozycji (Reaktywność)
