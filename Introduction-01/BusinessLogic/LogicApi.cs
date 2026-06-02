@@ -46,7 +46,7 @@ namespace Logic
         {
             IBall ball = e.Ball;
             if (ball == null) return;
-   
+
             CheckWallCollision(ball);
             CheckBallCollisions(ball);
         }
@@ -60,13 +60,29 @@ namespace Logic
                 double dx = ball.X - otherBall.X;
                 double dy = ball.Y - otherBall.Y;
                 double distance = Math.Sqrt(dx * dx + dy * dy);
-                double minDistance = (ball.Diameter / 2.0) + (otherBall.Diameter / 2.0);
+                double minDistance = (ball.Diameter / 2.0) + (otherBall.Diameter / 2.0) - 1.5;
 
                 if (distance <= minDistance)
                 {
-                    lock (_collisionLock)
+                    
+                    IBall firstLock = ball.Id < otherBall.Id ? ball : otherBall;
+                    IBall secondLock = ball.Id < otherBall.Id ? otherBall : ball;
+
+                    lock (firstLock)
                     {
-                        HandleCollision(ball, otherBall);
+                        lock (secondLock)
+                        {
+                           
+                            dx = ball.X - otherBall.X;
+                            dy = ball.Y - otherBall.Y;
+                            distance = Math.Sqrt(dx * dx + dy * dy);
+
+                            if (distance <= minDistance)
+                            {
+                               
+                                HandleCollision(ball, otherBall);
+                            }
+                        }
                     }
                 }
             }
@@ -99,13 +115,15 @@ namespace Logic
 
         private void CheckWallCollision(IBall ball)
         {
-            if (ball.X <= 0 && ball.VX < 0) ball.VX *= -1;
-            if (ball.X + ball.Diameter >= _data.Width && ball.VX > 0) ball.VX *= -1;
+            lock (ball)
+            {
+                if (ball.X <= 0 && ball.VX < 0) ball.VX *= -1;
+                if (ball.X + ball.Diameter >= _data.Width && ball.VX > 0) ball.VX *= -1;
 
-            if (ball.Y <= 0 && ball.VY < 0) ball.VY *= -1;
-            if (ball.Y + ball.Diameter >= _data.Height && ball.VY > 0) ball.VY *= -1;
+                if (ball.Y <= 0 && ball.VY < 0) ball.VY *= -1;
+                if (ball.Y + ball.Diameter >= _data.Height && ball.VY > 0) ball.VY *= -1;
+            }
         }
-
         public override List<IBall> GetBalls() => _data.GetBalls();
     }
 }

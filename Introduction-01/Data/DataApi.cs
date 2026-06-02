@@ -215,7 +215,6 @@ namespace Data
                 _stopwatch?.Stop();
             });
 
-            // Tworzymy wątkowy Timer systemowy (System.Threading.Timer)
             _timer = new Timer(UpdatePosition, null, 0, 16);
         }
 
@@ -236,7 +235,7 @@ namespace Data
 
             _logger.LogBallState(Id, X, Y, VX, VY);
 
-            // Powiadomienie wyższych warstw o zmianie pozycji (Reaktywność)
+            // Powiadomienie wyższych warstw o zmianie pozycji
             BallChanged?.Invoke(this, new BallChangedEventArgs { Ball = this });
         }
     }
